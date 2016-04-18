@@ -9,7 +9,7 @@ def count_tags(filename):
     tags = {}
     for event, ele in ET.iterparse(filename):
         current_tag = ele.tag
-        if not current_tag in tags:
+        if current_tag not in tags:
             tags[current_tag] = 1
         else:
             tags[current_tag] += 1
@@ -41,3 +41,4 @@ if False:
 
 expected = ["Street", "Avenue", "Boulevard", "Drive", "Court", "Place", "Square", "Lane", "Road",
             "Trail", "Parkway", "Commons", "Way", "Circle"]
+

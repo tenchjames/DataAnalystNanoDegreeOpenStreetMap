@@ -46,10 +46,12 @@ Inconsistent street names were found throughout the file. Most common cases were
 During the data query phase, while running aggregate queries in MongoDB these inconsistencies were found. Specifically the single quote character was represented with the unicode \u2019 and the "'" symbol. This was causing data to group in different ways.
 
 At this point I went back to the data cleaning process and wrote a simple regular expression to change to one consistent character when the unicode character was encountered.
-`right_apos = re.compile(ur'\u2019', re.IGNORECASE)`
-`matched = right_apos.search(value)`
-`if matched:`
-`value = re.sub(ur'\u2019', "'", value)`
+```
+right_apos = re.compile(ur'\u2019', re.IGNORECASE)
+matched = right_apos.search(value)
+if matched:`
+    value = re.sub(ur'\u2019', "'", value)
+```
 
 ##### Problem keys in tags
 My schema identified an entry by the type based openstreetmap model of nodes, ways and references. To account for this my schema has a field "type" which indicated what type of node. 
@@ -75,6 +77,40 @@ I expected now, way, relation, tag and nd. The other tags were not expected. I c
 
 File size: cleveland_ohio.osm 362.4 MB
 Unique user count: 977
- 
+Number of nodes: 1610592
+Number of ways: 166319
 
+```
+def number_of_nodes_by_type(type):
+    db = get_db()
+    return db.clevelandohio.find({"type": type}).count()
 
+if True:`
+    print "nodes: {0}".format(number_of_nodes_by_type("node"))
+    print "ways: {0}".format(number_of_nodes_by_type("way"))
+```
+
+Number of chosen types of nodes (food locations)
+```
+def get_food_node_count(db):
+    return db.clevelandohio.aggregate(
+        [
+            {
+                "$match": {
+                    "$or": [{"cuisine": {"$exists": True}},
+                            {"$and": [{"amenity": {"$exists": True}}, {"amenity": "restaurant"}]},
+                            {"food": {"$exists": True}}
+                            ]
+                }
+            },
+            {"$group": {"_id": "food_total", "count": {"$sum": 1}}}
+        ]
+    )
+
+if True:
+    db = get_db()
+    cursor = get_food_node_count(db)
+    for pointer in cursor:
+        print pointer
+```
+`{u'count': 311, u'_id': u'food_total'}`
