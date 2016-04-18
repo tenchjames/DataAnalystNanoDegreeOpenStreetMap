@@ -73,27 +73,7 @@ def update_name(name, mapping):
     return better_name
 
 
-# audit to see how many tags are in our dataset
-def count_tags(filename):
-    tags = {}
-    for event, ele in ET.iterparse(filename):
-        current_tag = ele.tag
-        if not current_tag in tags:
-            tags[current_tag] = 1
-        else:
-            tags[current_tag] += 1
-    return tags
 
-
-#pprint.pprint(count_tags(OSMFILE))
-# {'bounds': 1,
-#  'member': 19661,
-#  'nd': 1871102,
-#  'node': 1610592,
-#  'osm': 1,
-#  'relation': 2548,
-#  'tag': 1069095,
-#  'way': 166319}
 
 # test key to see how many have problem characters
 lower = re.compile(r'^([a-z]|_)*$')

@@ -73,4 +73,8 @@ I expected now, way, relation, tag and nd. The other tags were not expected. I c
 
 #### 2. Overview of the data
 
+File size: cleveland_ohio.osm 362.4 MB
+Unique user count: 977
+ 
+
 
