@@ -1,5 +1,6 @@
 import xml.etree.cElementTree as ET
 from collections import defaultdict
+from operator import itemgetter
 import re
 import codecs
 import json
@@ -159,8 +160,8 @@ def is_street_tag(keyArray):
 def is_street_tag_only(street_tag):
     return len(street_tag) == 2
 
-keys_to_ignore = ["type", "id", "visible", "visible", "create", "address"]
-tag_keys = set()
+keys_to_ignore = ["type", "id", "visible", "created", "address"]
+tag_keys = defaultdict()
 
 
 # in the data i found other tag tags had "type" as a key and it was changing
@@ -200,6 +201,12 @@ def shape_element(element):
                     if matched:
                         value = re.sub(ur'\u2019', "'", value)
 
+                    # this is to audit the list of available tags and find problems
+                    if tag.attrib['k'] in tag_keys:
+                        tag_keys[tag.attrib['k']] += 1
+                    else:
+                        tag_keys[tag.attrib['k']] = 1
+
                     if is_street_tag(key_array):
                         if 'address' not in node:
                             node['address'] = {}
@@ -208,7 +215,6 @@ def shape_element(element):
                             node['address']['street'] = update_name(value, street_name_mapping)
                     elif 'k' in tag.attrib and tag.attrib['k'] not in keys_to_ignore:
                         node[tag.attrib['k']] = value
-                        tag_keys.add((tag.attrib['k'])) # to see the keys we have available
 
             for tag in element.iter("nd"):
                 if 'node_refs' not in node:
@@ -236,7 +242,7 @@ def process_map(file_in, pretty = False):
 
 
 data = process_map(OSMFILE)
-#pprint.pprint(sorted(tag_keys))
+pprint.pprint(sorted(tag_keys.items(), key=itemgetter(1)))
 
 
 # take a look at the data
