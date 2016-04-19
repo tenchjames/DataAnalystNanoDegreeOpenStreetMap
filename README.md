@@ -243,3 +243,13 @@ The basis for most of my queries was to explore some additional information abou
 This tells me that the data is not up to date, and this type of data analysis around the food industry in Cleveland would need an additional data source to supplement the database. This would require additional work to combine the data sets into one schema, but it could be done in a similar manner as this data was cleaned. Multiple JSON files could be created to load the data from various sources.
 
 Pulling additional data would require some work to check for duplicate entries. If another source like google maps was used, one could attempt to match up latitude and longitude coordinates to combine data. 
+
+
+#### 3. Conclusion
+Overall the data analysis was minimal. The cleaning and processing was the majority of the work. This matched the general purpose of the project to "wrangle" data with python and load it into a data source. I found that moving data from dictionary structures into MongoDB is a good workflow and makes the data cleaning process much easier. My audit_street_names.py file does most of the cleaning. I added some helper functions to clean the data. I found issues with unicode characters and corrected for those. I also found issues with tags having keys that were equal to my high level schema keys so I created an ignore list.
+
+---
+Files
+1. data_overview.py - some python code to inspect the raw data
+2. audit_street_names.py - primary wrangling code. functions to clean and shape data
+3. mongo_queries.py - queries to explore the data that was loaded to MongoDB
