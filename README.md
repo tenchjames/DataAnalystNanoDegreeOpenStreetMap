@@ -114,3 +114,132 @@ if True:
         print pointer
 ```
 `{u'count': 311, u'_id': u'food_total'}`
+
+Food locations
+```
+def get_restaurant_count(db):
+    return db.clevelandohio.aggregate(
+        [
+            {
+                "$match": {
+                    "$or": [{"cuisine": {"$exists": True}},
+                            {"$and": [{"amenity": {"$exists": True}}, {"amenity": "restaurant"}]},
+                            {"food": {"$exists": True}}
+                            ]
+                }
+            },
+            {
+                "$project": {
+                    "name": {"$toLower": "$name"}
+                }
+            },
+
+            {
+                "$group": {"_id": "$name", "count": {"$sum": 1}}
+            },
+            {
+                "$sort": {"count": -1}
+            }
+        ]
+    )
+
+if True:
+    db = get_db()
+    cursor = get_restaurant_count(db)
+    pretty_print_cursor(cursor)
+```
+
+Top 15 results
+`{u'_id': u"mcdonald's", u'count': 28}`
+`{u'_id': u'burger king', u'count': 15}`
+`{u'_id': u'bob evans', u'count': 13}`
+`{u'_id': u'pizza hut', u'count': 12}`
+`{u'_id': u"wendy's", u'count': 12}`
+`{u'_id': u'', u'count': 10}`
+`{u'_id': u"applebee's", u'count': 8}`
+`{u'_id': u'taco bell', u'count': 6}`
+`{u'_id': u"arby's", u'count': 5}`
+`{u'_id': u'dairy queen', u'count': 4}`
+`{u'_id': u'longhorn steakhouse', u'count': 4}`
+`{u'_id': u'olive garden', u'count': 3}`
+`{u'_id': u'starbucks', u'count': 3}`
+`{u'_id': u'subway', u'count': 3}`
+`{u'_id': u'ihop', u'count': 3}`
+
+Top contributers
+```
+def get_users_with_count(db):
+    return db.clevelandohio.aggregate(
+        [
+            {
+                "$group": {"_id": "$created.user", "count": {"$sum": 1}}
+            },
+            {
+                "$sort": {"count": -1}
+            },
+            {
+                "$limit": 10
+            }
+        ]
+    )
+```
+
+```
+{u'_id': u'woodpeck_fixbot', u'count': 638581}
+{u'_id': u'unigami', u'count': 104489}
+{u'_id': u'skorasaurus', u'count': 78696}
+{u'_id': u'Evan Edwards', u'count': 60062}
+{u'_id': u'wlgann', u'count': 55629}
+{u'_id': u'Johnny Mapperseed', u'count': 52250}
+{u'_id': u'texnofobix', u'count': 48977}
+{u'_id': u'Rub21', u'count': 39766}
+{u'_id': u'bgarman4', u'count': 38855}
+{u'_id': u'Bored', u'count': 37926}
+```
+
+Top users that documented food location
+```
+def get_user_food_contributions(db):
+    return db.clevelandohio.aggregate(
+        [
+            {
+                "$match": {
+                    "$or": [{"cuisine": {"$exists": True}},
+                            {"$and": [{"amenity": {"$exists": True}}, {"amenity": "restaurant"}]},
+                            {"food": {"$exists": True}}
+                            ]
+                }
+            },
+            {
+                "$group": {"_id": "$created.user", "count": {"$sum": 1}}
+            },
+            {
+                "$sort": {"count" : -1}
+            },
+            {
+                "$limit": 10
+            }
+        ]
+    )
+```
+
+
+```
+{u'_id': u'skorasaurus', u'count': 66}
+{u'_id': u'Evan Edwards', u'count': 37}
+{u'_id': u'tmb926', u'count': 30}
+{u'_id': u'SomeoneElse_Revert', u'count': 20}
+{u'_id': u'Johnny Mapperseed', u'count': 18}
+{u'_id': u'unigami', u'count': 12}
+{u'_id': u'Minh Nguyen', u'count': 12}
+{u'_id': u'kuduboet', u'count': 11}
+{u'_id': u'texnofobix', u'count': 8}
+{u'_id': u'kisaa', u'count': 8}
+```
+
+#### 2. Other ideas
+The basis for most of my queries was to explore some additional information about the data outside of simply cleaning and loading it into the database. I found it surprising the low number of food nodes. What specifically drew my attention was that only 3 subway locations were reported. My knowledge of the area tells me there are many more locations.
+
+This tells me that the data is not up to date, and this type of data analysis around the food industry in Cleveland would need an additional data source to supplement the database. This would require additional work to combine the data sets into one schema, but it could be done in a similar manner as this data was cleaned. Multiple JSON files could be created to load the data from various sources.
+
+Pulling additional data would require some work to check for duplicate entries. If another source like google maps was used, one could attempt to match up latitude and longitude coordinates to combine data. 

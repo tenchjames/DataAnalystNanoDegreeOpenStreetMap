@@ -19,6 +19,7 @@ if False:
     pprint.pprint(count_tags(OSMFILE))
 
 
+# data structure to show the unique users and the number of contributions they have made to the map
 def unique_users(filename):
     users = {}
     i = 0
@@ -38,7 +39,3 @@ if False:
     sorted_desc = sorted(user_dict.items(), key=operator.itemgetter(1), reverse=True)
     for key, value in sorted_desc:
         print u'{0}: {1}'.format(key, value)
-
-expected = ["Street", "Avenue", "Boulevard", "Drive", "Court", "Place", "Square", "Lane", "Road",
-            "Trail", "Parkway", "Commons", "Way", "Circle"]
-

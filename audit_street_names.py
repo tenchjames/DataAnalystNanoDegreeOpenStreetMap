@@ -59,8 +59,9 @@ def audit(osmfile):
     osm_file.close()
     return street_types
 
+if False:
+    pprint.pprint(dict(audit(OSMFILE)))
 
-# pprint.pprint(dict(audit(OSMFILE)))
 
 # this method this method to update names to expected value
 def update_name(name, mapping):
@@ -73,14 +74,15 @@ def update_name(name, mapping):
     return better_name
 
 
-
-
-# test key to see how many have problem characters
+# regular expressions to test keys
 lower = re.compile(r'^([a-z]|_)*$')
 lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
 problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
+# this regular expression is to adjust right apostrophe unicode character in the data
 right_apos = re.compile(ur'\u2019', re.IGNORECASE)
 
+
+# sets the type of key based on if it is problem, lower case, lower case with a colon
 def key_type(element, keys):
     if element.tag == "tag":
         # YOUR CODE HERE
@@ -98,18 +100,17 @@ def key_type(element, keys):
                 keys['other'] += 1
     return keys
 
-
-
+# fills the values for each key type
 def audit_keys(filename):
     keys = {"lower": 0, "lower_colon": 0, "problemchars": 0, "other": 0}
     for _, element in ET.iterparse(filename):
         keys = key_type(element, keys)
-
     return keys
 
-#pprint.pprint(audit_keys(OSMFILE))
-# only one key found with problems addr.source:street
-# I choose to ignore this key
+if False:
+    pprint.pprint(audit_keys(OSMFILE))
+    # only one key found with problems addr.source:street
+    # I choose to ignore this key
 
 
 # inspect the data to see the type of key names on the nodes we are interested in
@@ -123,13 +124,15 @@ def get_unique_keys(filename):
                     keys.add(tag.attrib['k'])
     return keys
 
-#pprint.pprint(get_unique_keys(OSMFILE))
+if False:
+    pprint.pprint(get_unique_keys(OSMFILE))
 
 
 # shape the data set into a python dictionary to prepare for import to mongodb
-CREATED = [ "version", "changeset", "timestamp", "user", "uid"]
+CREATED = ["version", "changeset", "timestamp", "user", "uid"]
 
 
+# helper function to see if array is a street
 def is_street_tag(keyArray):
     if len(keyArray) > 1 and keyArray[0] == 'addr' and keyArray[1] == 'street':
         return True
@@ -140,6 +143,7 @@ def is_street_tag(keyArray):
 def is_street_tag_only(street_tag):
     return len(street_tag) == 2
 
+# filter list so we do not overwrite our primary schema keys
 keys_to_ignore = ["type", "id", "visible", "created", "address"]
 tag_keys = defaultdict()
 
@@ -206,6 +210,7 @@ def shape_element(element):
     return None
 
 
+# runs main code and creates our json file
 def process_map(file_in, pretty = False):
     file_out = "{0}.json".format(file_in)
     data = []

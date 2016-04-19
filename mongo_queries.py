@@ -76,28 +76,70 @@ def get_restaurant_count(db):
         ]
     )
 
-if True:
+if False:
     db = get_db()
     cursor = get_restaurant_count(db)
     pretty_print_cursor(cursor)
 
 
-
 # uncovered other node types which led to finding they type key in other nodes that was causing
 # problems in data cleaning step.
 def get_non_way_node_type(db):
-    return db.clevelandohio.find({"$and": [{"type":{"$ne": "way"}}, {"type":{"$ne": "node"}}]})
+    return db.clevelandohio.find({"$and": [{"type": {"$ne": "way"}}, {"type": {"$ne": "node"}}]})
+
+if False:
+    db = get_db()
+    cursor = get_non_way_node_type(db)
+    pretty_print_cursor(cursor)
 
 
+# confirm user count matches python analysis
+def get_users_with_count(db):
+    return db.clevelandohio.aggregate(
+        [
+            {
+                "$group": {"_id": "$created.user", "count": {"$sum": 1}}
+            },
+            {
+                "$sort": {"count": -1}
+            },
+            {
+                "$limit": 10
+            }
+        ]
+    )
+
+if False:
+    db = get_db()
+    cursor = get_users_with_count(db)
+    pretty_print_cursor(cursor)
 
 
+# query to see what users are contributing and how many nodes they have contributed related to food
+def get_user_food_contributions(db):
+    return db.clevelandohio.aggregate(
+        [
+            {
+                "$match": {
+                    "$or": [{"cuisine": {"$exists": True}},
+                            {"$and": [{"amenity": {"$exists": True}}, {"amenity": "restaurant"}]},
+                            {"food": {"$exists": True}}
+                            ]
+                }
+            },
+            {
+                "$group": {"_id": "$created.user", "count": {"$sum": 1}}
+            },
+            {
+                "$sort": {"count" : -1}
+            },
+            {
+                "$limit": 10
+            }
+        ]
+    )
 
-
-#db = get_db()
-#pprint.pprint(get_first_node(db))
-#pprint.pprint(get_amenity(db))
-# for document in get_amenity_count(db):
-#     pprint.pprint(document)
-#pretty_print_cursor(get_non_way_node_type(db))
-#pretty_print_cursor(get_non_way_node_type(db))
-#pretty_print_cursor(get_restaurant_count(db))
+if False:
+    db = get_db()
+    cursor = get_user_food_contributions(db)
+    pretty_print_cursor(cursor)
