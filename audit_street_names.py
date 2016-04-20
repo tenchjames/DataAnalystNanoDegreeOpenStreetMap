@@ -107,7 +107,7 @@ def is_street_tag_only(street_tag):
 
 
 def is_postal_tag(key_array):
-    if len(key_array) > 0 and key_array[1] == 'postcode':
+    if len(key_array) > 1 and key_array[1] == 'postcode':
         return True
     return False
 
@@ -166,12 +166,14 @@ def shape_element(element):
                         if is_street_tag_only(key_array):
                             node['address']['street'] = update_name(value, street_name_mapping)
 
-                        # added postal codes to the address when present
-                        # clean zip and ignore non standard zips before attempting to add
-                        if is_postal_tag(key_array):
-                            zipcode = update_zip_code(value)
-                            if zipcode:
-                                node['address']['postcode'] = zipcode
+                    # added postal codes to the address when present
+                    # clean zip and ignore non standard zips before attempting to add
+                    if is_postal_tag(key_array):
+                        if 'address' not in node:
+                            node['address'] = {}
+                        zipcode = update_zip_code(value)
+                        if zipcode:
+                            node['address']['postcode'] = zipcode
 
                     elif 'k' in tag.attrib and tag.attrib['k'] not in keys_to_ignore:
                         node[tag.attrib['k']] = value

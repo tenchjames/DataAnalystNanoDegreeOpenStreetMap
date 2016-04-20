@@ -80,6 +80,8 @@ Example of inconsistent zip codes
      '44113-2960',
 ```
 
+After cleaning the zip code data, I reloaded the MongoDB database and checked for the addres fields that contained zip codes to confirm only 5 digit zip codes were included.
+
 
 
 

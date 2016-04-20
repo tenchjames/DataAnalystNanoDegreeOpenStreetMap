@@ -143,3 +143,22 @@ if False:
     db = get_db()
     cursor = get_user_food_contributions(db)
     pretty_print_cursor(cursor)
+
+
+def get_zip_codes(db):
+    return db.clevelandohio.aggregate(
+        [
+            {
+                "$match": {"address.postcode": {"$exists": True}}
+            },
+            {
+                "$group": {"_id": "$address.postcode"}
+            }
+        ]
+    )
+
+
+if False:
+    db = get_db()
+    cursor = get_zip_codes(db)
+    pretty_print_cursor(cursor)
