@@ -71,6 +71,8 @@ During the tag counting process I found the following tags:
 `'tag': 1069095,`
 `'way': 166319}`
 
+I expected now, way, relation, tag and nd. The other tags were not expected. I could not find a need to include any of these tags in the data so the python code ignored those tags.
+
 ##### Inconsistent zip codes
 Inspection of the zip code showed inconsistencies. In some cases, the zip code contained a "-" character. In other cases the zip code was the word "Ohio". I cleaned this data by only keeping the first 5 digits, and ignoring the "Ohio" tags. See shared_code.py and audit_street_names.py for implementation._
 
@@ -80,12 +82,14 @@ Example of inconsistent zip codes
      '44113-2960',
 ```
 
-After cleaning the zip code data, I reloaded the MongoDB database and checked for the addres fields that contained zip codes to confirm only 5 digit zip codes were included.
+After cleaning the zip code data, I reloaded the MongoDB database and checked for the address fields that contained zip codes to confirm only 5 digit zip codes were included.
 
+##### Missing zip code information
+To allow more searches by zip code I saw there were keys for "tiger:zip_direction" in the xml data. After running a query there were over 47800 nodes that had tiger:zip_left alone that did not have any other postal code information. To clean the data and make it more usable I added this to my code when a postal code was not present and created an address field based on the tiger fields. I also cleaned those values before adding them. Additional cleaning included finding zip codes that were not in the range of valid Ohio zip codes such as 99999.
 
+##### Unnecessary or unused tags
+Aside from the address fields, I could not find a use for the other tiger data, so I decided to parse out the remaining tiger data.
 
-
-I expected now, way, relation, tag and nd. The other tags were not expected. I could not find a need to include any of these tags in the data so the python code ignored those tags.
 
 #### 2. Overview of the data
 

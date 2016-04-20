@@ -84,10 +84,14 @@ right_apos = re.compile(ur'\u2019', re.IGNORECASE)
 zip_code_re = shared_code.zip_code_re
 
 
+# according to http://www.structnet.com/instructions/zip_min_max_by_state.html and local knowledge
+# the valid ohio zip codes should fall in the range of 43001 and 45999
 def update_zip_code(zip):
     matched = zip_code_re.match(zip)
     if matched:
-        return matched.group(1)
+        zip_code = int(matched.group(1))
+        if zip_code >= 43001 and zip_code <= 45999:
+            return zip_code
     return None
 
 # shape the data set into a python dictionary to prepare for import to mongodb
@@ -111,8 +115,52 @@ def is_postal_tag(key_array):
         return True
     return False
 
+tiger_left = re.compile(r'^tiger:zip_left$')
+tiger_right = re.compile(r'^tiger:zip_right$')
+
+
+# for auditing tiger zips used
+zips_from_tiger = set()
+
+# search an element for tiger zip tags to add to our nodes
+# if it has a postal code, use that...else check tiger tags
+# if it has either a left or right only return that cleaned zip code
+# if it has a left and right, check they are equal and return
+# if not equal, or not a valid zip or does not contain tag, return none
+def get_best_matched_zip(element):
+    left_zip = None
+    right_zip = None
+    postal_zip = None
+    for tag in element.iter("tag"):
+        if 'k' in tag.attrib:
+            key_array = tag.attrib['k'].split(":")
+            if is_postal_tag(key_array):
+                postal_zip = update_zip_code(tag.attrib['v'])
+                break
+            matched = tiger_left.search(tag.attrib['k'])
+            if matched:
+                left_zip = update_zip_code(tag.attrib['v'])
+                continue
+            matched = tiger_right.search(tag.attrib['k'])
+            if matched:
+                right_zip = update_zip_code(tag.attrib['v'])
+                continue
+    if postal_zip:
+        return postal_zip
+    if left_zip and right_zip and left_zip == right_zip:
+        zips_from_tiger.add(left_zip)
+        return left_zip
+    if left_zip:
+        zips_from_tiger.add(left_zip)
+        return left_zip
+    if right_zip:
+        zips_from_tiger.add(right_zip)
+        return right_zip
+    return None
+
 # filter list so we do not overwrite our primary schema keys
-keys_to_ignore = ["type", "id", "visible", "created", "address"]
+keys_to_ignore = ["type", "id", "visible", "created", "address", "addr:postcode"]
+tiger_tag = shared_code.tiger_tag
 tag_keys = defaultdict()
 
 
@@ -143,6 +191,14 @@ def shape_element(element):
                 node['created'][c] = element.attrib[c]
 
         if element.tag == "way":
+            zip_code = get_best_matched_zip(element)
+            # added postal codes to the address when present
+            # clean zip and ignore non standard zips before attempting to add
+            if zip_code:
+                if 'address' not in node:
+                    node['address'] = {}
+                node['address']['postcode'] = zip_code
+
             for tag in element.iter("tag"):
                 matched = problemchars.search(tag.attrib['k'])
                 if matched is None:
@@ -154,10 +210,10 @@ def shape_element(element):
                         value = re.sub(ur'\u2019', "'", value)
 
                     # this is to audit the list of available tags and find problems
-                    if tag.attrib['k'] in tag_keys:
-                        tag_keys[tag.attrib['k']] += 1
-                    else:
-                        tag_keys[tag.attrib['k']] = 1
+                    # if tag.attrib['k'] in tag_keys:
+                    #     tag_keys[tag.attrib['k']] += 1
+                    # else:
+                    #     tag_keys[tag.attrib['k']] = 1
 
                     if is_street_tag(key_array):
                         if 'address' not in node:
@@ -166,17 +222,25 @@ def shape_element(element):
                         if is_street_tag_only(key_array):
                             node['address']['street'] = update_name(value, street_name_mapping)
 
-                    # added postal codes to the address when present
-                    # clean zip and ignore non standard zips before attempting to add
-                    if is_postal_tag(key_array):
-                        if 'address' not in node:
-                            node['address'] = {}
-                        zipcode = update_zip_code(value)
-                        if zipcode:
-                            node['address']['postcode'] = zipcode
+                    # # added postal codes to the address when present
+                    # # clean zip and ignore non standard zips before attempting to add
+                    # if zip_code:
+                    #     if 'address' not in node:
+                    #         node['address'] = {}
+                    #     node['address']['postcode'] = zip_code
 
-                    elif 'k' in tag.attrib and tag.attrib['k'] not in keys_to_ignore:
-                        node[tag.attrib['k']] = value
+                    # if is_postal_tag(key_array):
+                    #     if 'address' not in node:
+                    #         node['address'] = {}
+                    #     zipcode = update_zip_code(value)
+                    #     if zipcode:
+                    #         node['address']['postcode'] = zipcode
+
+                    if 'k' in tag.attrib and tag.attrib['k'] not in keys_to_ignore:
+                        matched = tiger_tag.search(tag.attrib['k'])
+                        if not matched:
+                            tag_keys[tag.attrib['k']] = 1
+                            node[tag.attrib['k']] = value
 
             for tag in element.iter("nd"):
                 if 'node_refs' not in node:
@@ -206,7 +270,7 @@ def process_map(file_in, pretty = False):
 
 data = process_map(OSMFILE)
 #pprint.pprint(sorted(tag_keys.items(), key=itemgetter(1)))
-
+#pprint.pprint(zips_from_tiger)
 
 # take a look at the data
 # with open('cleveland_ohio.osm.json') as fp:

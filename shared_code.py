@@ -14,6 +14,8 @@ lower = re.compile(r'^([a-z]|_)*$')
 lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
 problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
 
-tiger = re.compile(r'^tiger:zip*')
+tiger_left = re.compile(r'^tiger:zip_left$')
+tiger_right = re.compile(r'^tiger:zip_right$')
+tiger_tag = re.compile(r'^tiger:*')
 
 zip_code_re = re.compile(r'(\d{5})')

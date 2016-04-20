@@ -97,11 +97,6 @@ if False:
 # zipcode exploration - there are multiple ways to represent zip codes in the OSM data
 # including addr:zip, tiger:zip_left, tiger:zip_right and additional tiger:zip_direction_number
 # tags as well. In addition, zip codes are not in a consistent format
-
-
-tiger = shared_code.tiger
-
-
 def get_zip_codes(filename):
     zips = set()
     for _, element in ET.iterparse(filename):
@@ -133,15 +128,35 @@ if False:
     pprint.pprint(get_zip_codes_start_only(OSMFILE))
 
 
+tiger_left = shared_code.tiger_left
+
+
+# are there cases where tiger has a zip code but there is not address zip tag?
 def inspect_nodes_with_tiger(filename):
-    nodes = defaultdict(set())
-    zips = get_zip_codes(filename)
+    tiger_zip_tag_no_postal = 0
     for _, element in ET.iterparse(filename):
         if element.tag == "node" or element.tag == "way":
+            has_tiger = False
+            has_post_code = False
             for tag in element.iter("tag"):
                 if 'k' in tag.attrib:
-                    matched = tiger.search(tag.attrib['k'])
+                    matched = tiger_left.search(tag.attrib['k'])
                     if matched:
-                        return True
+                        has_tiger = True
+                        break
+            if has_tiger:
+                for tag in element.iter("tag"):
+                    if 'k' in tag.attrib and tag.attrib['k'] == "addr:postcode":
+                        has_post_code = True
+                        break
+
+            if has_tiger and not has_post_code:
+                tiger_zip_tag_no_postal += 1
+    return tiger_zip_tag_no_postal
+
+
+if False:
+    print "{0} tags with tiger zip code but no address:postcode".format(inspect_nodes_with_tiger(OSMFILE))
+
 
 
