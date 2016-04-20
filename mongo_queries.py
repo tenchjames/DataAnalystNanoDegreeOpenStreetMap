@@ -158,7 +158,7 @@ def get_zip_codes(db):
     )
 
 
-if True:
+if False:
     db = get_db()
     cursor = get_zip_codes(db)
     pretty_print_cursor(cursor)
