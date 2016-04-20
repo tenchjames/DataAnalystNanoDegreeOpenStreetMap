@@ -6,13 +6,12 @@ import codecs
 import json
 import pprint
 
-OSMFILE = 'cleveland_ohio.osm'
-street_type_re = re.compile(r'\b\S+\.?$', re.IGNORECASE)
+import shared_code
 
-# street types we expect to see
-# added additional after initial parse like Way
-expected = ["Street", "Avenue", "Boulevard", "Drive", "Court", "Place", "Square", "Lane", "Road",
-            "Trail", "Parkway", "Commons", "Way", "Circle"]
+OSMFILE = shared_code.OSMFILE
+street_type_re = shared_code.expected
+
+expected = shared_code.expected
 
 # after auditing street names these new mappings were created to map variations to expected
 street_name_mapping = {
@@ -75,9 +74,9 @@ def update_name(name, mapping):
 
 
 # regular expressions to test keys
-lower = re.compile(r'^([a-z]|_)*$')
-lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
-problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
+lower = shared_code.lower
+lower_colon = shared_code.lower_colon
+problemchars = shared_code.problemchars
 # this regular expression is to adjust right apostrophe unicode character in the data
 right_apos = re.compile(ur'\u2019', re.IGNORECASE)
 
@@ -99,6 +98,7 @@ def key_type(element, keys):
             else:
                 keys['other'] += 1
     return keys
+
 
 # fills the values for each key type
 def audit_keys(filename):
