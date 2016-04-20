@@ -155,7 +155,7 @@ def inspect_nodes_with_tiger(filename):
     return tiger_zip_tag_no_postal
 
 
-if False:
+if True:
     print "{0} tags with tiger zip code but no address:postcode".format(inspect_nodes_with_tiger(OSMFILE))
 
 

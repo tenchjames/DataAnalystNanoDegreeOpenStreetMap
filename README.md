@@ -85,11 +85,18 @@ Example of inconsistent zip codes
 After cleaning the zip code data, I reloaded the MongoDB database and checked for the address fields that contained zip codes to confirm only 5 digit zip codes were included.
 
 ##### Missing zip code information
+```
+if True:
+    print "{0} tags with tiger zip code but no address:postcode".format(inspect_nodes_with_tiger(OSMFILE))
+```
+`47841 tags with tiger zip code but no address:postcode`
 To allow more searches by zip code I saw there were keys for "tiger:zip_direction" in the xml data. After running a query there were over 47800 nodes that had tiger:zip_left alone that did not have any other postal code information. To clean the data and make it more usable I added this to my code when a postal code was not present and created an address field based on the tiger fields. I also cleaned those values before adding them. Additional cleaning included finding zip codes that were not in the range of valid Ohio zip codes such as 99999.
+See `def get_best_matched_zip(element):` for implementation to add these to the schema
 
 ##### Unnecessary or unused tags
 Aside from the address fields, I could not find a use for the other tiger data, so I decided to parse out the remaining tiger data.
 
+running `def get_zip_codes(db):` returns only valid zip codes in the range expected
 
 #### 2. Overview of the data
 
