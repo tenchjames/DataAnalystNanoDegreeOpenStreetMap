@@ -1,4 +1,5 @@
 import xml.etree.cElementTree as ET
+from collections import defaultdict
 import pprint
 import operator
 
@@ -74,5 +75,73 @@ def audit_keys(filename):
         keys = key_type(element, keys)
     return keys
 
-if True:
+if False:
     pprint.pprint(audit_keys(OSMFILE))
+
+
+# inspect the data to see the type of key names on the nodes we are interested in
+# found keys like amenity which will be useful to query
+def get_unique_keys(filename):
+    keys = set()
+    for _, element in ET.iterparse(filename):
+        if element.tag == "node" or element.tag == "way":
+            for tag in element.iter("tag"):
+                if 'k' in tag.attrib:
+                    keys.add(tag.attrib['k'])
+    return keys
+
+if False:
+    pprint.pprint(get_unique_keys(OSMFILE))
+
+
+# zipcode exploration - there are multiple ways to represent zip codes in the OSM data
+# including addr:zip, tiger:zip_left, tiger:zip_right and additional tiger:zip_direction_number
+# tags as well. In addition, zip codes are not in a consistent format
+
+
+tiger = shared_code.tiger
+
+
+def get_zip_codes(filename):
+    zips = set()
+    for _, element in ET.iterparse(filename):
+        if element.tag == "node" or element.tag == "way":
+            for tag in element.iter("tag"):
+                if 'k' in tag.attrib and tag.attrib['k'] == "addr:postcode":
+                    zips.add(tag.attrib['v'])
+    return zips
+
+if False:
+    pprint.pprint(get_zip_codes(OSMFILE))
+
+zip_code_re = shared_code.zip_code_re
+
+
+# test regex pulls zip code first 5 digits only and ignores bad keys
+def get_zip_codes_start_only(filename):
+    zips = set()
+    for _, element in ET.iterparse(filename):
+        if element.tag == "node" or element.tag == "way":
+            for tag in element.iter("tag"):
+                if 'k' in tag.attrib and tag.attrib['k'] == "addr:postcode":
+                    match = zip_code_re.match(tag.attrib['v'])
+                    if match:
+                        zips.add(match.group(1))
+    return zips
+
+if False:
+    pprint.pprint(get_zip_codes_start_only(OSMFILE))
+
+
+def inspect_nodes_with_tiger(filename):
+    nodes = defaultdict(set())
+    zips = get_zip_codes(filename)
+    for _, element in ET.iterparse(filename):
+        if element.tag == "node" or element.tag == "way":
+            for tag in element.iter("tag"):
+                if 'k' in tag.attrib:
+                    matched = tiger.search(tag.attrib['k'])
+                    if matched:
+                        return True
+
+

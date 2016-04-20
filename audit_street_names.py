@@ -9,7 +9,7 @@ import pprint
 import shared_code
 
 OSMFILE = shared_code.OSMFILE
-street_type_re = shared_code.expected
+street_type_re = shared_code.street_type_re
 
 expected = shared_code.expected
 
@@ -81,60 +81,22 @@ problemchars = shared_code.problemchars
 right_apos = re.compile(ur'\u2019', re.IGNORECASE)
 
 
-# sets the type of key based on if it is problem, lower case, lower case with a colon
-def key_type(element, keys):
-    if element.tag == "tag":
-        # YOUR CODE HERE
-        if 'k' in element.attrib:
-            key = element.attrib['k']
-            if problemchars.search(key):
-                print key
-                print element.attrib['v']
-                keys['problemchars'] += 1
-            elif lower.match(key) is not None:
-                keys['lower'] += 1
-            elif lower_colon.match(key) is not None:
-                keys['lower_colon'] += 1
-            else:
-                keys['other'] += 1
-    return keys
+zip_code_re = shared_code.zip_code_re
 
 
-# fills the values for each key type
-def audit_keys(filename):
-    keys = {"lower": 0, "lower_colon": 0, "problemchars": 0, "other": 0}
-    for _, element in ET.iterparse(filename):
-        keys = key_type(element, keys)
-    return keys
-
-if False:
-    pprint.pprint(audit_keys(OSMFILE))
-    # only one key found with problems addr.source:street
-    # I choose to ignore this key
-
-
-# inspect the data to see the type of key names on the nodes we are interested in
-# found keys like amenity which will be useful to query
-def get_unique_keys(filename):
-    keys = set()
-    for _, element in ET.iterparse(filename):
-        if element.tag == "node" or element.tag == "way":
-            for tag in element.iter("tag"):
-                if 'k' in tag.attrib:
-                    keys.add(tag.attrib['k'])
-    return keys
-
-if False:
-    pprint.pprint(get_unique_keys(OSMFILE))
-
+def update_zip_code(zip):
+    matched = zip_code_re.match(zip)
+    if matched:
+        return matched.group(1)
+    return None
 
 # shape the data set into a python dictionary to prepare for import to mongodb
 CREATED = ["version", "changeset", "timestamp", "user", "uid"]
 
 
 # helper function to see if array is a street
-def is_street_tag(keyArray):
-    if len(keyArray) > 1 and keyArray[0] == 'addr' and keyArray[1] == 'street':
+def is_street_tag(key_array):
+    if len(key_array) > 1 and key_array[0] == 'addr' and key_array[1] == 'street':
         return True
     return False
 
@@ -142,6 +104,12 @@ def is_street_tag(keyArray):
 # assumes the tag is a street tag with only one : that split it
 def is_street_tag_only(street_tag):
     return len(street_tag) == 2
+
+
+def is_postal_tag(key_array):
+    if len(key_array) > 0 and key_array[1] == 'postcode':
+        return True
+    return False
 
 # filter list so we do not overwrite our primary schema keys
 keys_to_ignore = ["type", "id", "visible", "created", "address"]
@@ -197,6 +165,14 @@ def shape_element(element):
                         # only add the tag if it is just the street, no extra : delimiter
                         if is_street_tag_only(key_array):
                             node['address']['street'] = update_name(value, street_name_mapping)
+
+                        # added postal codes to the address when present
+                        # clean zip and ignore non standard zips before attempting to add
+                        if is_postal_tag(key_array):
+                            zipcode = update_zip_code(value)
+                            if zipcode:
+                                node['address']['postcode'] = zipcode
+
                     elif 'k' in tag.attrib and tag.attrib['k'] not in keys_to_ignore:
                         node[tag.attrib['k']] = value
 
@@ -227,7 +203,7 @@ def process_map(file_in, pretty = False):
 
 
 data = process_map(OSMFILE)
-pprint.pprint(sorted(tag_keys.items(), key=itemgetter(1)))
+#pprint.pprint(sorted(tag_keys.items(), key=itemgetter(1)))
 
 
 # take a look at the data

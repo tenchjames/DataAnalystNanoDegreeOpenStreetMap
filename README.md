@@ -71,6 +71,18 @@ During the tag counting process I found the following tags:
 `'tag': 1069095,`
 `'way': 166319}`
 
+##### Inconsistent zip codes
+Inspection of the zip code showed inconsistencies. In some cases, the zip code contained a "-" character. In other cases the zip code was the word "Ohio". I cleaned this data by only keeping the first 5 digits, and ignoring the "Ohio" tags. See shared_code.py and audit_street_names.py for implementation._
+
+Example of inconsistent zip codes
+```
+     '44113',
+     '44113-2960',
+```
+
+
+
+
 I expected now, way, relation, tag and nd. The other tags were not expected. I could not find a need to include any of these tags in the data so the python code ignored those tags.
 
 #### 2. Overview of the data
